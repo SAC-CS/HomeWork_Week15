@@ -1,0 +1,196 @@
+/*-----------------------Homework Week 15: Enhance lab 2 ---------------------------
+-----------to throw the dice 25 times in separate threads. Using array to store dice results.
+-----------Instantiate 3 dices, each one throw 3 dices and writes result each time. Track and verify results
+ */
+ 
+ //==============================DataArray with 'Synchronization'=======================================================
+// Class that manages an integer array to be shared by multiple threads with Synchronization.
+import java.util.Arrays;
+import java.util.Random;
+
+public class DataArray extends Dice {
+	
+	private int randoms;
+	private final int[] array; // the shared integer array
+	private int writeIndex = 0; // index of next element to be written
+	private final static Random generator = new Random();
+ 
+	public DataArray( int size )
+	{
+		array = new int[ size ];
+	}   
+
+ // add a value to the shared array
+	public synchronized void add( int value )
+	{
+	
+		int position = writeIndex; // store the write index
+	
+		try
+		{
+			// put thread to sleep 
+			Thread.sleep( generator.nextInt( 500 ) );
+		} 
+		catch ( InterruptedException ex )
+		{		
+			ex.printStackTrace();
+		} 
+	
+		// put value in the appropriate element
+		array[ position ] = value;
+	 
+		System.out.printf("This is index: %d\n", writeIndex);
+		System.out.printf("%s wrote %2d to element %d.\n",
+		Thread.currentThread().getName(), value, position);
+	
+		++writeIndex; // increment index of element to be written next (neu da add vo array[1] thi ke tiep se la add vo array[2]...)
+	
+	} // end method add
+		
+	// used for outputting the contents each elements of the shared integer array
+	public String toString()
+	{
+		return "\nContents of DataArray are:\n" + Arrays.toString(array);
+	} 
+    	
+}// end class DataArray
+
+//========================================================================================================
+
+import java.util.Scanner; 
+import java.util.Random;
+
+
+public class Dice {
+	
+//declare a field variable or property of superclass
+	  	public static int randomInt; //need key "static" here	  	       
+        int total = 0;
+        int numOfDices;
+        
+//Create a constructor
+public Dice()
+{}    
+
+public int throwDice()
+{
+	return  1 + (int)(Math.random() * 6);
+}	
+ 	     
+//the method of superclass that return a random number
+public int getRandoms()
+{
+	return randomInt;
+}	     
+   
+public String toString() {
+	StringBuilder result = new StringBuilder(); //initialize and create an object of the class StringBuilder
+	String NEW_LINE = System.getProperty("line.separator");
+	    	    
+	//call method append() to add the name of class with a new line and  some information follow.
+	result.append(this.getClass().getName() + " Object {" + NEW_LINE);// "this" refers to the current object of class Object.
+	result.append(" Name: Dice" + NEW_LINE);
+	result.append(" Number of dices: 1 " +  NEW_LINE);
+	result.append(" Dice value: " + randomInt + NEW_LINE );
+	result.append("}");
+
+	return result.toString();
+}}
+//======================================================================================================
+
+import java.lang.Runnable;
+
+class DiceArrayWriter implements Runnable 
+{	
+    private  int counter;
+    private  DataArray sharedDataArray;   
+ 	private  int startValue;
+ 	private int randNum;
+ 	private int NumOfDices;
+ 
+   
+    public DiceArrayWriter(int value, DataArray  array, int numOfDices)
+    {
+   	  startValue = value;
+   	  sharedDataArray = array;
+   	  NumOfDices=numOfDices;
+    } 
+           
+    @Override
+    public void run()
+    {    	
+    	for ( int i = 0; i < startValue; i++ )
+    		{   	
+    			if (NumOfDices==1)
+    				sharedDataArray.add(sharedDataArray.throwDice()); // add an element to the shared array
+    			else if (NumOfDices==3)    			    				
+    				sharedDataArray.add(sharedDataArray.getRandoms());      			
+    			else 
+    				sharedDataArray.add(0);
+    		}		
+    }      
+} 
+//=================================================================================================
+
+import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+//-----------------------------------------------------------------------
+
+public class MainDiceTest  {
+    
+	private static int randTotal=0;
+    public static void main(String[] args) {          	   	
+
+/*-----------Part1: to throw the dice 25 times in separate threads. Using array to store dice results.    	
+    	//Call construct of the shared object - Create a array[25] to contain data
+    	DataArray sharedArray = new DataArray(25); //index=25    		  	
+        	
+   	 	// create a task to write data to the shared Array
+    	DiceArrayWriter writer1 = new DiceArrayWriter(25, sharedArray); //throw one Dice 25 times    	    	
+    	
+    	// execute the tasks with an ExecutorService
+    	ExecutorService executor = Executors.newCachedThreadPool();
+    	executor.execute( writer1 );    	
+    	executor.shutdown();
+-----------------------------------------------------------------------------------------*/    	
+    	
+/*-----------Part2: Instantiate 3 dices, each one throw 3 dices and writes result each time.*/ 	
+    	//Call construct of the shared object - Create a array[5] to contain data    	
+    	DataArray sharedArray = new DataArray(5); //index=5   	
+    	Dice myDice1=new Dice();
+    	Dice myDice2=new Dice();
+    	Dice myDice3=new Dice();
+    	
+    	for (int i=1; i<=5; i++)
+    	{
+    		
+    	myDice1.randomInt = myDice1.throwDice()+myDice2.throwDice()+myDice3.throwDice();    	   	
+    
+       	// create a task to write data to the shared Array    	
+    	DiceArrayWriter writer2 = new DiceArrayWriter(i,sharedArray,3); //throw 3 Dice 5 times   
+    	 	
+    	// execute the tasks with an ExecutorService
+    	ExecutorService executor = Executors.newCachedThreadPool();
+    	executor.execute(writer2);     	
+    	executor.shutdown();     	
+  	       	
+    	try
+     	{    		
+     		// wait 1 minute for all writers to finish executing
+     		boolean tasksEnded = executor.awaitTermination(1, TimeUnit.MINUTES);
+
+     		if (tasksEnded)
+    		 System.out.println(sharedArray); // print contents
+     		else
+    		 System.out.println("Timed out while waiting for tasks to finish.");
+    		
+     	} 
+     	catch (InterruptedException ex)
+     	{     		
+     		System.out.println("Interrupted while waiting for tasks to finish.");
+     	}
+    	} //end for 	    
+} // end main
+} // end class MainDiceTest
