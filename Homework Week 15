@@ -194,3 +194,12 @@ public class MainDiceTest  {
     	} //end for 	    
 } // end main
 } // end class MainDiceTest
+
+Row 151:
+	DiceArrayWriter writer1 = new DiceArrayWriter(25, sharedArray); //throw one Dice 25 times    	
+
+Line 172:
+	DiceArrayWriter writer2 = new DiceArrayWriter(i,sharedArray,3); //throw 3 Dice 5 times   
+
+1. I only see 1 constructor.  Here we are using 2 constructor?
+2. Please provide more documentation, both at the Class level and at the Method level.
